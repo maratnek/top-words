@@ -4,25 +4,31 @@
 #include <QThread>
 #include <QDebug>
 
-//#include <QtConcurrent>
+#include "top-fifteen.h"
 
 // second variant
-// the worker that will be moved to a thread
-class LogWorker : public QObject
+class Handler : public QObject
 {
   Q_OBJECT
 
 public:
-  explicit LogWorker(QObject* parent = nullptr) : QObject(parent) {}
+  explicit Handler(QObject* parent = nullptr) : QObject(parent) {}
 
+signals:
+  void finishHandle();
 
 public slots:
-  // this slot will be executed by event loop (one call at a time)
-  void logEvent(const QString& event)
+  void handleFile(const QString& fileName)
   {
     qDebug() << QThread::currentThreadId() << "  ";
-    qDebug() << event;
+    qDebug() << fileName;
+    tops.m_tops.clear();
+    tops.handleFile(fileName);
+    emit finishHandle();
   }
+
+public:
+  TopFifteen tops;
 };
 
 
@@ -60,17 +66,17 @@ private:
   TWorker* _worker;
 };
 
-using TWorkerLog = Thread<LogWorker>;
+using TWorker = Thread<Handler>;
 // interface
-class LogService : public TWorkerLog//public Thread<LogWorker>
+class HandlerService : public TWorker
 {
   Q_OBJECT
 
 public:
-  explicit LogService(QObject* parent = nullptr);
+  explicit HandlerService(QObject* parent = nullptr);
 
 signals:
-  void logEvent(const QString& event);
+  void handleFile(const QString& filename);
 };
 
 

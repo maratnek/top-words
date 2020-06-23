@@ -38,6 +38,8 @@ else()
     main.cpp
     threads.h
     threads.cpp
+    top-fifteen.cpp
+    top-fifteen.h
     plotter.cpp
     plotter.h
     plotter.ui

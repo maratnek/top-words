@@ -1,8 +1,7 @@
 #include "threads.h"
 
-LogService::LogService(QObject* parent)
-  : TWorkerLog(new LogWorker, parent)
+HandlerService::HandlerService(QObject* parent)
+  : TWorker(new Handler, parent)
 {
-  const LogWorker* p_worker = worker();
-  connect(this, &LogService::logEvent, p_worker, &LogWorker::logEvent);
+  connect(this, &HandlerService::handleFile, worker(), &Handler::handleFile);
 }

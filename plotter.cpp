@@ -9,15 +9,6 @@
 #include "plotter.h"
 #include "ui_Plotter.h"
 
-//std
-#include <queue>
-#include <vector>
-// regular exp word
-constexpr char* regular_const = "([^\\d,^\\W]+\\w+)";
-// (\\w+)
-
-#include "threads.h"
-
 Plotter::Plotter(QWidget* parent) :
   QMainWindow(parent),
   ui(new Ui::Plotter)
@@ -30,7 +21,29 @@ Plotter::Plotter(QWidget* parent) :
 
   connect(ui->actionAbout, &QAction::triggered, this, &Plotter::about);
 
+  for (size_t i = 0; i < max_tops_count; i++)
+  {
+    ui->listWidget->addItem("");
+  }
 
+  connect(handlerServ.worker(), &Handler::finishHandle, this, &Plotter::update);
+
+}
+
+void Plotter::update()
+{
+  auto handler = handlerServ.worker();
+  QMap<QString, int>::iterator it = handler->tops.m_tops.begin();
+
+  ui->listWidget->sortItems(Qt::AscendingOrder);
+
+  for (int i = 0; i < ui->listWidget->count(); ++i)
+  {
+    ui->listWidget->item(i)->setText(it.key() + " -> " + QString::number(it.value()));
+    qDebug() << i << it.key() + " -> " + QString::number(it.value()) << '\n';
+    it++;
+    ui->listWidget->update();
+  }
 
 }
 
@@ -38,178 +51,6 @@ Plotter::~Plotter()
 {
   delete ui;
 }
-
-#include <queue>
-#include <QPair>
-#include <iostream>
-
-auto cmp = [](auto left, auto right)
-{
-  return (left.second) > (right.second);
-};
-using PriorQueue = std::priority_queue < std::pair<QString, int>, std::vector<std::pair<QString, int>>, decltype(cmp)>;
-template<typename T> void print_queue(T& q)
-{
-  T t = q;
-
-  while (!t.empty())
-  {
-    qDebug() << t.top() << " ";
-    t.pop();
-  }
-
-  std::cout << '\n';
-}
-
-class TopFifteen
-{
-  const int topCount = 15;
-  int count = 0;
-  using TMapIter = QMap<QString, int>::iterator;
-public:
-  TopFifteen() : m_min(0), m_max(0), queueTops(cmp)
-  {
-  }
-
-  void addElement(const std::pair<QString, int>& elem)
-  {
-
-    if (m_tops.count() > 15)
-    {
-      if (m_tops.contains(elem.first))
-      {
-        m_tops[elem.first] = elem.second;
-      }
-      else
-      {
-        auto iter = std::min(m_tops.begin(), m_tops.end(), [](TMapIter l, TMapIter r)
-        {
-          return l.value() < r.value();
-        });
-
-        if (iter != m_tops.end() && iter.value() < elem.second)
-        {
-          m_tops.remove(iter.key());
-          m_tops[elem.first] = elem.second;
-        }
-
-      }
-    }
-    else
-    {
-      m_tops.insert(elem.first, elem.second);
-    }
-  }
-
-  void addElement2(const std::pair<QString, int>& elem)
-  {
-    PriorQueue temp(cmp);
-
-    bool exist_elem = false;
-
-    while (!queueTops.empty())
-    {
-      auto it = queueTops.top();
-
-      if (it.first != elem.first)
-      {
-        temp.push(it);
-      }
-      else
-      {
-        exist_elem = true;
-      }
-
-      queueTops.pop();
-    }
-
-    if (exist_elem)
-    {
-      while (!temp.empty())
-      {
-        queueTops.push(temp.top());
-        temp.pop();
-      }
-    }
-
-    print_queue(queueTops);
-
-    queueTops.push(elem);
-
-    if (++count > topCount)
-    {
-      queueTops.pop();
-    }
-
-  }
-
-  ~TopFifteen()
-  {
-  }
-
-  void handleFile(QString fileName);
-
-  int m_max, m_min;
-  PriorQueue queueTops;
-  QMap<QString, int> m_tops;
-
-};
-
-TopFifteen tops;
-
-
-#include <QHash>
-
-QHash<QString, int> hashCount;
-
-void TopFifteen::handleFile(QString fileName)
-{
-  QFile file(fileName);
-
-  if (!file.open(QIODevice::ReadOnly | QFile::Text))
-  {
-    QMessageBox::warning(0, "Warning", "Cannot open file: " + file.errorString());
-    return;
-  }
-
-  qDebug() << "Handle file" << '\n';
-  QTextStream in(&file);
-  QRegExp rx(regular_const);
-
-  while (!in.atEnd())
-  {
-    QString line = in.readLine();
-    QStringList list;
-    int pos = 0;
-
-    while ((pos = rx.indexIn(line, pos)) != -1)
-    {
-      list << rx.cap(1);
-      pos += rx.matchedLength();
-    }
-
-    for (auto it : list)
-    {
-      auto count = hashCount[it];
-      hashCount.insert(it, ++count);
-      tops.addElement({ it, count });
-    }
-
-    qDebug() << list << '\n';
-  }
-
-  auto i = hashCount.constBegin();
-
-  while (i != hashCount.constEnd())
-  {
-    qDebug() << i.key() << ": " << i.value() << '\n';
-    ++i;
-  }
-}
-
-#include <QThread>
-#include <qtconcurrentrun.h>
-using namespace QtConcurrent;
 
 void Plotter::open()
 {
@@ -225,35 +66,14 @@ void Plotter::open()
 
   setWindowTitle(fileName);
 
-  //handleFile(file);
-  LogService logServ(this);
-  qDebug() << "send from log service";
-  logServ.logEvent("Log Event show");
-  logServ.logEvent("Log Event show");
-  //QFuture<void> f1 = run(handleFile, fileName);
-  //f1.waitForFinished();
-
-  //while (!tops.queueTops.empty())
-  //{
-  //  auto elem = tops.queueTops.top();
-  //  ui->listWidget->addItem(elem.first + " " + QString::number(elem.second));
-  //  tops.queueTops.pop();
-  //}
-
-  QMap<QString, int>::iterator it = tops.m_tops.begin();
-
-  while (it != tops.m_tops.constEnd())
-  {
-    ui->listWidget->addItem(it.key() + " -> " + QString::number(it.value()));
-    ++it;
-  }
+  handlerServ.handleFile(fileName);
+  //tops.handleFile(fileName);
+  //LogService logServ(this);
+  //qDebug() << "send from log service";
+  //logServ.logEvent("Log Event show");
+  //logServ.logEvent("Log Event show");
 
 
-
-  //QTextStream in(&file);
-  //QString text = in.readAll();
-  //ui->textEdit->setText(text);
-  //file.close();
 }
 
 void Plotter::exit()

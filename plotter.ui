@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>956</width>
+    <width>332</width>
     <height>514</height>
    </rect>
   </property>
@@ -27,9 +27,6 @@
     <item>
      <widget class="QListWidget" name="listWidget"/>
     </item>
-    <item>
-     <widget class="QTextEdit" name="textEdit"/>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -37,7 +34,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>956</width>
+     <width>332</width>
      <height>21</height>
     </rect>
    </property>

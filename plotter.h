@@ -1,7 +1,8 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
 #include <QMainWindow>
-#include "top-fifteen.h"
+//#include "top-fifteen.h"
+#include "threads.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -26,9 +27,12 @@ private slots:
 
   void exit();
 
+  void update();
+
 private:
   Ui::Plotter* ui;
   QString currentFile;
+  HandlerService handlerServ;
 };
 
 #endif // Plotter_H
