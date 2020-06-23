@@ -29,6 +29,8 @@ private slots:
 
   void update();
 
+  void progressBarUpdate(quint8 value);
+
 private:
   Ui::Plotter* ui;
   QString currentFile;

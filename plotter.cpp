@@ -26,8 +26,17 @@ Plotter::Plotter(QWidget* parent) :
     ui->listWidget->addItem("");
   }
 
-  connect(handlerServ.worker(), &Handler::finishHandle, this, &Plotter::update);
+  ui->progressBar->hide();
 
+  connect(handlerServ.worker(), &Handler::finishHandle, this, &Plotter::update);
+  connect(&handlerServ.worker()->tops, &TopFifteen::progressSend, this, &Plotter::progressBarUpdate);
+
+}
+
+void Plotter::progressBarUpdate(quint8 value)
+{
+  ui->progressBar->show();
+  ui->progressBar->setValue(value);
 }
 
 void Plotter::update()
@@ -67,12 +76,6 @@ void Plotter::open()
   setWindowTitle(fileName);
 
   handlerServ.handleFile(fileName);
-  //tops.handleFile(fileName);
-  //LogService logServ(this);
-  //qDebug() << "send from log service";
-  //logServ.logEvent("Log Event show");
-  //logServ.logEvent("Log Event show");
-
 
 }
 

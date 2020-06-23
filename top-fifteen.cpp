@@ -20,21 +20,30 @@ void TopFifteen::handleFile(QString fileName)
     return;
   }
 
-  qDebug() << "Handle file" << '\n';
+  auto file_size = file.size();
+  quint64 handle_size = 0;
+  qDebug() << "Handle file" << fileName << "- size: " << file_size << '\n';
+
   QTextStream in(&file);
   QRegExp rx(regular_const);
+  QString last_words = "";
 
   while (!in.atEnd())
   {
     QString line = in.readLine();
+
     QStringList list;
     int pos = 0;
+    int prev_pos = 0;
 
     while ((pos = rx.indexIn(line, pos)) != -1)
     {
       list << rx.cap(1);
       pos += rx.matchedLength();
+      prev_pos = pos;
     }
+
+    //qDebug() << "Last index: " << prev_pos << ":" << line.mid(prev_pos);
 
     for (auto it : list)
     {
@@ -43,8 +52,19 @@ void TopFifteen::handleFile(QString fileName)
       this->addElement({ it, count });
     }
 
+    // need to emit to the progress bar
+    handle_size += line.size() + 2;
+    quint8 progress = double(handle_size) / double(file_size) * 100;
+    //qDebug() << "Progress: " << progress << "%" << " handle: " << handle_size << '\n';
+    progressSend(progress);
+
     //qDebug() << list << '\n';
   }
+
+  handle_size += 3;
+  quint8 progress = 100;
+  //qDebug() << "Progress: " << progress << "%" << " handle: " << handle_size << '\n';
+  progressSend(progress);
 
   //auto i = hashCount.constBegin();
 
