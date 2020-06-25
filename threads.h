@@ -12,23 +12,14 @@ class Handler : public QObject
   Q_OBJECT
 
 public:
-  explicit Handler(QObject* parent = nullptr) : QObject(parent) {}
-
-signals:
-  void finishHandle();
-
-public slots:
-  void handleFile(const QString& fileName)
+  explicit Handler(QObject* parent = nullptr) : QObject(parent)
   {
-    qDebug() << QThread::currentThreadId() << "  ";
-    qDebug() << fileName;
-    tops.m_tops.clear();
-    tops.handleFile(fileName);
-    emit finishHandle();
+
   }
 
-public:
-  TopFifteen tops;
+
+//public:
+  //TopFifteen tops;
 };
 
 
@@ -66,7 +57,7 @@ private:
   TWorker* _worker;
 };
 
-using TWorker = Thread<Handler>;
+using TWorker = Thread<TopFifteen>;
 // interface
 class HandlerService : public TWorker
 {

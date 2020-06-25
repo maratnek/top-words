@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #    endif()
 #endif()
 
-find_package(Qt5 COMPONENTS Widgets Concurrent REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Concurrent Charts REQUIRED)
 
 if(ANDROID)
   add_library(top-fifeteen SHARED
@@ -46,4 +46,4 @@ else()
   )
 endif()
 
-target_link_libraries(top-fifeteen PRIVATE Qt5::Widgets Qt5::Concurrent)
+target_link_libraries(top-fifeteen PRIVATE Qt5::Widgets Qt5::Concurrent Qt5::Charts)

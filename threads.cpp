@@ -1,7 +1,8 @@
 #include "threads.h"
+#include "top-fifteen.h"
 
 HandlerService::HandlerService(QObject* parent)
-  : TWorker(new Handler, parent)
+  : TWorker(new TopFifteen, parent)
 {
-  connect(this, &HandlerService::handleFile, worker(), &Handler::handleFile);
+  connect(this, &HandlerService::handleFile, worker(), &TopFifteen::handleFile);
 }
