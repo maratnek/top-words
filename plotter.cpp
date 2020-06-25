@@ -17,7 +17,6 @@ Plotter::Plotter(QWidget* parent) :
   m_timer(new QTimer(parent)),
   m_barset(new QBarSet("")),
   m_chart(new QChart),
-  m_series(new QHorizontalStackedBarSeries),
   ui(new Ui::Plotter)
 {
   ui->setupUi(this);
@@ -38,12 +37,14 @@ Plotter::Plotter(QWidget* parent) :
   }
 
   ui->progressBar->hide();
+  ui->listWidget->hide();
 
   connect(m_handlerServ->worker(), &TopFifteen::progressSend, this, &Plotter::progressBarUpdate);
   connect(m_handlerServ->worker(), &TopFifteen::finishHandle, this, [ = ]()
   {
     m_timer->stop();
     this->updateChart();
+    // statistic data
     ui->statusBar->showMessage("Status bar: matched words -> " + QString::number(m_handlerServ->worker()->m_max_matched_words));
   });
 
@@ -52,17 +53,12 @@ Plotter::Plotter(QWidget* parent) :
     this->updateChart();
   });
 
-  qDebug() << QThread::currentThreadId() << "  ";
-
 }
 
 void Plotter::progressBarUpdate(quint8 value)
 {
   ui->progressBar->show();
   ui->progressBar->setValue(value);
-
-  this->update();
-
 }
 
 void Plotter::updateChart()
@@ -70,21 +66,23 @@ void Plotter::updateChart()
   auto handler = m_handlerServ->worker();
   QMap<QString, int>::iterator it = handler->m_tops.begin();
 
-  m_axisY->clear();
-  int max = 15;
+  QBarCategoryAxis* axisY = static_cast<QBarCategoryAxis*>(m_chart->axisY());
+  axisY->clear();
+  int max = max_tops_count;
 
-  for (int i = 0; i < max_tops_count; ++i)
+  for (int i = 0; i < handler->m_tops.size(); ++i)
   {
     max = it.value() > max ? it.value() : max;
     m_barset->replace(i, it.value());
-    m_axisY->append(it.key());
+    axisY->append(it.key());
     it++;
   }
 
-  auto axisX = static_cast<QValueAxis*>(m_chart->axisX());
+  QValueAxis* axisX = static_cast<QValueAxis*>(m_chart->axisX());
 
   axisX->setMax(max);
 
+  m_chartView->show();
 }
 
 void Plotter::update()
@@ -151,34 +149,32 @@ void Plotter::initChart()
     categories << "item: " + QString::number(i);
   }
 
-  m_series->append(m_barset);
+  QHorizontalStackedBarSeries* series = new QHorizontalStackedBarSeries();
+  series->append(m_barset);
 
-  m_chart->addSeries(m_series);
+  m_chart->addSeries(series);
   m_chart->setTitle("Top fifteen chart");
 
-  m_axisY = new QBarCategoryAxis();
-  m_axisY->append(categories);
-  m_chart->addAxis(m_axisY, Qt::AlignLeft);
-  m_series->attachAxis(m_axisY);
+  QBarCategoryAxis* axisY = new QBarCategoryAxis();
+  axisY->append(categories);
+  m_chart->addAxis(axisY, Qt::AlignLeft);
+  series->attachAxis(axisY);
   QValueAxis* axisX = new QValueAxis();
+  axisX->setLabelFormat("%d");
   m_chart->addAxis(axisX, Qt::AlignBottom);
 
-  m_series->attachAxis(axisX);
+  series->attachAxis(axisX);
 
   m_chart->legend()->setVisible(true);
   m_chart->legend()->setAlignment(Qt::AlignBottom);
-  m_chart->setAnimationOptions(QChart::SeriesAnimations);
+  //m_chart->setAnimationOptions(QChart::SeriesAnimations);
 
-  QChartView* chartView = new QChartView(m_chart);
-  chartView->setRenderHint(QPainter::Antialiasing);
+  m_chartView = new QChartView(m_chart);
+  m_chartView->setRenderHint(QPainter::Antialiasing);
 
-  //QThread* chart_thread = new QThread();
-  //chartView->moveToThread(chart_thread);
-  //chart_thread->start();
-  //chartView->show();
-  //chartView->resize(300, 800);
-  chartView->setMinimumWidth(800);
+  m_chartView->setMinimumWidth(800);
 
-  ui->horizontalLayout->addWidget(chartView);
+  ui->horizontalLayout->addWidget(m_chartView);
+  m_chartView->hide();
 
 }

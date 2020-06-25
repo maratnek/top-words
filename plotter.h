@@ -50,9 +50,8 @@ private:
   HandlerService* m_handlerServ;
 
   QChart* m_chart;
-  QHorizontalStackedBarSeries* m_series;
   QBarSet* m_barset;
-  QBarCategoryAxis* m_axisY;
+  QChartView* m_chartView;
 
   void initChart();
 
