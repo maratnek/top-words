@@ -6,8 +6,7 @@
 
 #include "top-fifteen.h"
 
-// regular exp word
-constexpr char* regular_const = "([^\\d,^\\W]+\\w+)";
+constexpr char* regular_const = "([^\\d,^\\W][^\\d,^\\W]+)";
 
 constexpr int max_tops_count = 15;
 
@@ -18,11 +17,10 @@ class TopFifteen : public  QObject
   int count = 0;
 
   QHash<QString, int> m_hashCount;
+  void addElement(const std::pair<QString, int>& elem);
 
 signals:
   void progressSend(quint8);
-
-signals:
   void finishHandle();
 
 public slots:
@@ -30,11 +28,8 @@ public slots:
 
 public:
   TopFifteen(QObject* parent = nullptr) : QObject(parent) {}
-  ~TopFifteen() {}
 
-  void addElement(const std::pair<QString, int>& elem);
-
-  QMap<QString, int> m_tops;
+  QVector<std::pair<QString, int>> m_vtops{};
   uint m_max_matched_words = 0;
 
 };

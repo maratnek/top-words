@@ -38,12 +38,14 @@ Plotter::Plotter(QWidget* parent) :
 
   ui->progressBar->hide();
   ui->listWidget->hide();
+  ui->listWidget->setMinimumWidth(400);
 
   connect(m_handlerServ->worker(), &TopFifteen::progressSend, this, &Plotter::progressBarUpdate);
   connect(m_handlerServ->worker(), &TopFifteen::finishHandle, this, [ = ]()
   {
     m_timer->stop();
     this->updateChart();
+    this->update();
     // statistic data
     ui->statusBar->showMessage("Status bar: matched words -> " + QString::number(m_handlerServ->worker()->m_max_matched_words));
   });
@@ -59,22 +61,23 @@ void Plotter::progressBarUpdate(quint8 value)
 {
   ui->progressBar->show();
   ui->progressBar->setValue(value);
+  this->update();
 }
 
 void Plotter::updateChart()
 {
   auto handler = m_handlerServ->worker();
-  QMap<QString, int>::iterator it = handler->m_tops.begin();
+  auto it = handler->m_vtops.begin();
 
   QBarCategoryAxis* axisY = static_cast<QBarCategoryAxis*>(m_chart->axisY());
   axisY->clear();
   int max = max_tops_count;
 
-  for (int i = 0; i < handler->m_tops.size(); ++i)
+  for (int i = 0; i < handler->m_vtops.size() && i < max_tops_count; ++i)
   {
-    max = it.value() > max ? it.value() : max;
-    m_barset->replace(i, it.value());
-    axisY->append(it.key());
+    max = it->second > max ? it->second : max;
+    m_barset->replace(i, it->second);
+    axisY->append(it->first);
     it++;
   }
 
@@ -87,18 +90,15 @@ void Plotter::updateChart()
 
 void Plotter::update()
 {
+  ui->listWidget->show();
   auto handler = m_handlerServ->worker();
-  QMap<QString, int>::iterator it = handler->m_tops.begin();
+  auto it = handler->m_vtops.begin();
 
-
-  for (int i = 0; i < ui->listWidget->count(); ++i)
+  for (int i = 0; i < ui->listWidget->count() && it != handler->m_vtops.end(); ++i)
   {
-    ui->listWidget->item(i)->setText(it.key() + " -> " + QString::number(it.value()));
-    it++;
+    ui->listWidget->item(i)->setText(it->first + " -> " + QString::number(it->second));
+    ++it;
   }
-
-  ui->listWidget->update();
-
 }
 
 Plotter::~Plotter()
@@ -167,7 +167,7 @@ void Plotter::initChart()
 
   m_chart->legend()->setVisible(true);
   m_chart->legend()->setAlignment(Qt::AlignBottom);
-  //m_chart->setAnimationOptions(QChart::SeriesAnimations);
+  m_chart->setAnimationOptions(QChart::SeriesAnimations);
 
   m_chartView = new QChartView(m_chart);
   m_chartView->setRenderHint(QPainter::Antialiasing);

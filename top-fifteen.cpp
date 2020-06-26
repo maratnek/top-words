@@ -10,15 +10,14 @@
 #include <QThread>
 #include <QDebug>
 
-
 using TMapIter = QMap<QString, int>::iterator;
 
 void TopFifteen::handleFile(const QString& fileName)
 {
   qDebug() << QThread::currentThreadId() << "  ";
   qDebug() << fileName;
-  m_tops.clear();
   m_hashCount.clear();
+  m_vtops.clear();
 
   QFile file(fileName);
 
@@ -34,24 +33,21 @@ void TopFifteen::handleFile(const QString& fileName)
 
   QTextStream in(&file);
   QRegExp rx(regular_const);
-  //QString last_words = "";
   uint sent_max = 15000;
   uint sent_count = 0;
 
   while (!in.atEnd())
   {
     QString line = in.readLine();
-
-    //QStringList list;
     int pos = 0;
     int prev_pos = 0;
 
     while ((pos = rx.indexIn(line, pos)) != -1)
     {
       auto word = rx.cap(1);
-      auto count = m_hashCount[word];
-      m_hashCount.insert(word, ++count);
-      this->addElement({ word, count });
+      auto count = m_hashCount[word.toLower()];
+      m_hashCount.insert(word.toLower(), ++count);
+      this->addElement({ word.toLower(), count });
 
       // send event
       if (++sent_count > sent_max)
@@ -59,7 +55,7 @@ void TopFifteen::handleFile(const QString& fileName)
         sent_count = 0;
         handle_size += pos - prev_pos;
         quint8 progress = double(handle_size) / double(file_size) * 100;
-        progressSend(progress);
+        emit progressSend(progress);
       }
 
       pos += rx.matchedLength();
@@ -68,59 +64,38 @@ void TopFifteen::handleFile(const QString& fileName)
       ++m_max_matched_words;
     }
 
-    //qDebug() << "Last index: " << prev_pos << ":" << line.mid(prev_pos);
-
-    // need to emit to the progress bar
     handle_size += line.size() + 2;
     quint8 progress = double(handle_size) / double(file_size) * 100;
-    //qDebug() << "Progress: " << progress << "%" << " handle: " << handle_size << '\n';
-    progressSend(progress);
-
-    //qDebug() << list << '\n';
+    emit progressSend(progress);
   }
 
-  handle_size += 3;
   quint8 progress = 100;
-  //qDebug() << "Progress: " << progress << "%" << " handle: " << handle_size << '\n';
-  progressSend(progress);
+  emit progressSend(progress);
 
-  //auto i = hashCount.constBegin();
-
-  //while (i != hashCount.constEnd())
-  //{
-  //  qDebug() << i.key() << ": " << i.value() << '\n';
-  //  ++i;
-  //}
   emit finishHandle();
 }
 
 void TopFifteen::addElement(const std::pair<QString, int>& elem)
 {
-
-  if (m_tops.count() > max_tops_count)
+  for (auto& it : m_vtops)
   {
-    if (m_tops.contains(elem.first))
+    if (it.first == elem.first)
     {
-      m_tops[elem.first] = elem.second;
-    }
-    else
-    {
-      auto iter = std::min(m_tops.begin(), m_tops.end(), [](TMapIter l, TMapIter r)
-      {
-        return l.value() < r.value();
-      });
-
-      if (iter != m_tops.end() && iter.value() < elem.second)
-      {
-        m_tops.remove(iter.key());
-        m_tops[elem.first] = elem.second;
-      }
-
+      it.second = elem.second;
+      return;
     }
   }
-  else
+
+  m_vtops.push_back(elem);
+  std::sort(m_vtops.begin(), m_vtops.end(), [](auto l, auto r)
   {
-    m_tops.insert(elem.first, elem.second);
+    return l.second > r.second;
+  });
+
+  if (m_vtops.size() > max_tops_count)
+  {
+    m_vtops.pop_back();
   }
+
 }
 
