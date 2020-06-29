@@ -13,10 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: build dir
-      run: mkdir build && cd build
-    - name: cmake
-      run: cmake .. -G"Ninja"
+    - name: cmake generate
+      run: mkdir build && cd build && cmake -DCMAKE_CXX_FLAGS="-Werror" ..
     - name: cmake build
       run: cmake --build . -j 4
+
     
