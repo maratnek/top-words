@@ -29,6 +29,10 @@ find_package(Qt5 COMPONENTS Widgets Concurrent Charts REQUIRED)
 if(ANDROID)
   add_library(top-fifeteen SHARED
     main.cpp
+    threads.h
+    threads.cpp
+    top-fifteen.cpp
+    top-fifteen.h
     plotter.cpp
     plotter.h
     plotter.ui

@@ -75,7 +75,7 @@ void TopFifteen::handleFile(const QString& fileName)
   emit finishHandle();
 }
 
-void TopFifteen::addElement(const std::pair<QString, int>& elem)
+void TopFifteen::addElement(const QPair<QString, int>& elem)
 {
   for (auto& it : m_vtops)
   {

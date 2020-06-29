@@ -27,7 +27,6 @@ Plotter::Plotter(QWidget* parent) :
 
   connect(ui->actionAbout, &QAction::triggered, this, &Plotter::about);
 
-  ui->listWidget->sortItems(Qt::AscendingOrder);
 
   this->initChart();
 
@@ -73,6 +72,11 @@ void Plotter::updateChart()
   axisY->clear();
   int max = max_tops_count;
 
+  qSort(handler->m_vtops.begin(), handler->m_vtops.end(), [](QPair<QString, int> l, QPair<QString, int> r)
+  {
+    return l.first > r.first;
+  });
+
   for (int i = 0; i < handler->m_vtops.size() && i < max_tops_count; ++i)
   {
     max = it->second > max ? it->second : max;
@@ -91,14 +95,19 @@ void Plotter::updateChart()
 void Plotter::update()
 {
   ui->listWidget->show();
+  ui->listWidget->setSortingEnabled(false);
   auto handler = m_handlerServ->worker();
   auto it = handler->m_vtops.begin();
 
-  for (int i = 0; i < ui->listWidget->count() && it != handler->m_vtops.end(); ++i)
+  for (int i = 0; i < max_tops_count && it != handler->m_vtops.end(); ++i)
   {
     ui->listWidget->item(i)->setText(it->first + " -> " + QString::number(it->second));
     ++it;
   }
+
+  ui->listWidget->setSortingEnabled(true);
+
+  ui->listWidget->sortItems(Qt::AscendingOrder);
 }
 
 Plotter::~Plotter()

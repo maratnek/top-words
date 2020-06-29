@@ -17,7 +17,7 @@ class TopFifteen : public  QObject
   int count = 0;
 
   QHash<QString, int> m_hashCount;
-  void addElement(const std::pair<QString, int>& elem);
+  void addElement(const QPair<QString, int>& elem);
 
 signals:
   void progressSend(quint8);
@@ -29,7 +29,7 @@ public slots:
 public:
   TopFifteen(QObject* parent = nullptr) : QObject(parent) {}
 
-  QVector<std::pair<QString, int>> m_vtops{};
+  QVector<QPair<QString, int>> m_vtops{};
   uint m_max_matched_words = 0;
 
 };
