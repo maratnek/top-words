@@ -31,7 +31,7 @@ jobs:
         py7zrversion: '==0.7'
         extra: '--external 7z'
     - name: cmake generate
-      run: mkdir build && cd build && cmake -G"Visual Studio 15 2017 Win64"-DCMAKE_CXX_FLAGS="-Werror" ..
+      run: mkdir build && cd build && cmake -G"Visual Studio 15 2017 Win64" -DCMAKE_CXX_FLAGS="-Werror" ..
     - name: cmake build
       run: cmake --build . -j 4
 
