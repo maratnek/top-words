@@ -2,41 +2,30 @@ name: build
 
 on: push
 
-env:
-  VCINSTALLDIR: C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/
-  Qt5_DIR: Qt\5.13.1\msvc2017_64\lib\cmake\Qt5\
-  QTDIR: Qt\5.13.1\msvc2017_64\
-
 jobs:
-  windows:
-    timeout-minutes: 15
-    runs-on: windows-2019
-
+  build:
+    runs-on: windows-2016
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@v1
-
-    - name: Prepare
-      working-directory: build
-      shell: cmd
-      run: |
-        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
-        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
-    - name: Configure
-      working-directory: build
-      shell: cmd
-      run: cmake -DCPACK_IFW_ROOT=Qt/Tools/QtInstallerFramework/3.1 -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 16 2019" ..
-
-    - name: Compile
-      working-directory: build
-      shell: cmd
-      run: cmake --build . --config Release -j 4
-
-    - name: Package
-      working-directory: build
-      shell: cmd
-      run: cmake --build . --config Release --target package
+    - uses: actions/checkout@v2
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: '5.12.9'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_msvc2017_64'
+        dir: '${{ github.workspace }}/example/'
+        install-deps: 'true'
+        modules: 'qtcharts qtwebengine'
+        mirror: 'http://mirrors.ocf.berkeley.edu/qt/'
+        cached: 'false'
+        aqtversion: '==0.9'
+        py7zrversion: '==0.7'
+        extra: '--external 7z'
+    - name: cmake generate
+      run: mkdir build && cd build && cmake -G"Visual Studio 15 2017 Win64" -DCMAKE_CXX_FLAGS="-Werror" ..
+    - name: cmake build
+      run: cmake --build . -j 4
 
     - name: Release
       uses: softprops/action-gh-release@v1
